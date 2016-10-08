@@ -1,22 +1,44 @@
-window.onload = function(){onLoad();};
+$(function() {
 
-function onLoad() {
+$( "#password_length" ).on( "input", function() {
+  $( "#password_length_range" ).val($( "#password_length" ).val());
+});
+
+$( "#password_length_range" ).on( "input", function() {
+  $( "#password_length" ).val($( "#password_length_range" ).val());
+});
+
+$( "input" ).on( "input", function() {
+  console.log( "input!" );
+  
+  var serviceName     = $( "#service_name" ).val();
+  var keyword           = $( "#keyword"     ).val();
+  var passwordLength = $( "#password_length"      ).val();
+  
+  $( "#password" ).val( generatePassword(serviceName, keyword, passwordLength) );
+});
  console.log("Hello");
  
- getPassword("amazon", "horse", 8);
-}
+ generatePassword("amazon", "horse", 8);
+
+});
 	
 var _uppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 var _lowercaseLetters = "abcdefghijklmnopqrstuvwxyz";
 var _numbers = "1234567890";
 var _symbols = "()`~!@#$%^&*-+=|{}[]:;'<>,.?/";
+	
+_uppercaseLetters = _uppercaseLetters.split("");
+_lowercaseLetters = _lowercaseLetters.split("");
+_numbers = _numbers.split("");
+_symbols = _symbols.split("");
 
 var seed;
 var _p = 47; // p % 4 = 3
 var _q = 67; // q % 4 = 3
 var _m = _p * _q;
 
-function getPassword(serviceName, keyword, passwordLength) {
+function generatePassword(serviceName, keyword, passwordLength) {
 	console.log(serviceName);
 	console.log(keyword);
 	console.log(passwordLength);
@@ -25,11 +47,6 @@ function getPassword(serviceName, keyword, passwordLength) {
 	"serviceName: %s, keyword: %s, passwordLength: %d",
 	serviceName, keyword, passwordLength
 	);
-	
-	_uppercaseLetters = _uppercaseLetters.split("");
-	_lowercaseLetters = _lowercaseLetters.split("");
-	_numbers = _numbers.split("");
-	_symbols = _symbols.split("");
 	
 	var serviceNameNumber = getSumOfUTF8BytesFromString(serviceName);
 	var keywordNumber = getSumOfUTF8BytesFromString(keyword);
@@ -56,7 +73,7 @@ function getPassword(serviceName, keyword, passwordLength) {
 
 	//#region Составление символов для пароля
 	//uppercase
-	var uppercaseLetters = _uppercaseLetters;
+	var uppercaseLetters = _uppercaseLetters.slice();
 	for (var i = 0; i < quantityOfUppercaseLetters; i++) {
 		var j = next(uppercaseLetters.length);
 		passwordOfUppercaseLetters += uppercaseLetters[j];
@@ -64,7 +81,7 @@ function getPassword(serviceName, keyword, passwordLength) {
 	}
 
 	//lowercase
-	var lowercaseLetters = _lowercaseLetters;
+	var lowercaseLetters = _lowercaseLetters.slice();
 	for (var i = 0; i < quantityOfLowercaseLetters; i++) {
 		var j = next(lowercaseLetters.length);
 		passwordOfLowercaseLetters += lowercaseLetters[j];
@@ -72,7 +89,7 @@ function getPassword(serviceName, keyword, passwordLength) {
 	}
 
 	//numbers
-	var numbers = _numbers;
+	var numbers = _numbers.slice();
 	for (var i = 0; i < quantityOfNumbers; i++) {
 		var j = next(numbers.length);
 		passwordOfNumbers += numbers[j];
@@ -80,7 +97,7 @@ function getPassword(serviceName, keyword, passwordLength) {
 	}
 
 	//symbols
-	var symbols = _symbols;
+	var symbols = _symbols.slice();
 	for (var i = 0; i < quantityOfSymbols; i++) {
 		var j = next(symbols.length);
 		passwordOfSymbols += symbols[j];
@@ -143,6 +160,7 @@ function getPassword(serviceName, keyword, passwordLength) {
 	//#endregion
 
 	console.log(password);
+	return password;
 }
 
 function getSumOfUTF8BytesFromString(str) {
