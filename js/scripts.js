@@ -1,65 +1,56 @@
+"use strict";
+
 $(function() {
 
 $( "#password_length" ).on( "input", function() {
-  $( "#password_length_range" ).val($( "#password_length" ).val());
+	$( "#password_length_range" ).val($( "#password_length" ).val());
 });
 
 $( "#password_length_range" ).on( "input", function() {
-  $( "#password_length" ).val($( "#password_length_range" ).val());
+	$( "#password_length" ).val($( "#password_length_range" ).val());
 });
 
-$( "input" ).on( "input", function() {
-  console.log( "input!" );
-  
-  var serviceName     = $( "#service_name" ).val();
-  var keyword           = $( "#keyword"     ).val();
-  var passwordLength = $( "#password_length"      ).val();
-  
-  $( "#password" ).val( generatePassword(serviceName, keyword, passwordLength) );
+$( "#main_form" ).on( "input", function() {
+	var serviceName = $( "#service_name").val();
+	var keyword = $( "#keyword").val();
+	var passwordLength = $( "#password_length").val();
+	var useSpecialSymbols = document.getElementById("symbols_checkbox").checked;
+
+	$( "#password" ).val( generatePassword(serviceName, keyword, passwordLength, useSpecialSymbols) );
 });
- console.log("Hello");
- 
- generatePassword("amazon", "horse", 8);
+
+$( "#copy_button" ).on( "click", function() {
+	document.getElementById("password").select();
+	document.execCommand("copy");
+	window.getSelection().removeAllRanges();
+});
 
 });
 	
-var _uppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-var _lowercaseLetters = "abcdefghijklmnopqrstuvwxyz";
-var _numbers = "1234567890";
-var _symbols = "()`~!@#$%^&*-+=|{}[]:;'<>,.?/";
-	
-_uppercaseLetters = _uppercaseLetters.split("");
-_lowercaseLetters = _lowercaseLetters.split("");
-_numbers = _numbers.split("");
-_symbols = _symbols.split("");
+var _uppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+var _lowercaseLetters = "abcdefghijklmnopqrstuvwxyz".split("");
+var _numbers = "1234567890".split("");
+var _symbols = "()`~!@#$%^&*-+=|{}[]:;'<>,.?/".split("");
 
 var seed;
-var _p = 47; // p % 4 = 3
-var _q = 67; // q % 4 = 3
-var _m = _p * _q;
+var _m = (38 * 4 + 3) * (62 * 4 + 3);// p % 4 = 3 // q % 4 = 3 // m = p * q
 
-function generatePassword(serviceName, keyword, passwordLength) {
-	console.log(serviceName);
-	console.log(keyword);
-	console.log(passwordLength);
-	
-	console.log(
-	"serviceName: %s, keyword: %s, passwordLength: %d",
-	serviceName, keyword, passwordLength
-	);
-	
+function generatePassword(serviceName, keyword, passwordLength, useSpecialSymbols) {
 	var serviceNameNumber = getSumOfUTF8BytesFromString(serviceName);
 	var keywordNumber = getSumOfUTF8BytesFromString(keyword);
 	
-	seed = serviceNameNumber + keywordNumber;
-	console.log(seed);
+	seed = (serviceNameNumber + keywordNumber) * passwordLength;
 
 	//Password should be contain uppercase, lowercase, numbers and symbols
 	//without repeated characters
 	//and consecutive of letters or numbers
+	
+	if (useSpecialSymbols)
+		var quantityOfSymbols = Math.max(2, Math.floor(passwordLength / 5));
+	else
+		var quantityOfSymbols = 0;
             
 	var quantityOfNumbers = Math.floor(passwordLength / 4);
-	var quantityOfSymbols = Math.max(2, Math.floor(passwordLength / 5));
 	var quantityOfUppercaseLetters = Math.floor((passwordLength - quantityOfNumbers - quantityOfSymbols) / 2);
 	var quantityOfLowercaseLetters = passwordLength - quantityOfNumbers - quantityOfSymbols - quantityOfUppercaseLetters;
 
@@ -69,42 +60,47 @@ function generatePassword(serviceName, keyword, passwordLength) {
 	var passwordOfLowercaseLetters = "";
 
 	//quantityOfSymbols <= quantityOfNumbers <= quantityOfUppercaseLetters <= quantityOfLowercaseLetters
-	console.log("%d %d %d %d", quantityOfSymbols, quantityOfNumbers, quantityOfUppercaseLetters, quantityOfLowercaseLetters)
 
 	//#region Составление символов для пароля
 	//uppercase
 	var uppercaseLetters = _uppercaseLetters.slice();
 	for (var i = 0; i < quantityOfUppercaseLetters; i++) {
-		var j = next(uppercaseLetters.length);
+		var j = nextRandom(uppercaseLetters.length);
 		passwordOfUppercaseLetters += uppercaseLetters[j];
 		uppercaseLetters.splice(j, 1);
 	}
+	
+	seed += 1;
 
 	//lowercase
 	var lowercaseLetters = _lowercaseLetters.slice();
 	for (var i = 0; i < quantityOfLowercaseLetters; i++) {
-		var j = next(lowercaseLetters.length);
+		var j = nextRandom(lowercaseLetters.length);
 		passwordOfLowercaseLetters += lowercaseLetters[j];
 		lowercaseLetters.splice(j, 1);
 	}
+	
+	seed += 1;
 
 	//numbers
 	var numbers = _numbers.slice();
 	for (var i = 0; i < quantityOfNumbers; i++) {
-		var j = next(numbers.length);
+		var j = nextRandom(numbers.length);
 		passwordOfNumbers += numbers[j];
 		numbers.splice(j, 1);
 	}
+	
+	seed += 1;
 
 	//symbols
 	var symbols = _symbols.slice();
 	for (var i = 0; i < quantityOfSymbols; i++) {
-		var j = next(symbols.length);
+		var j = nextRandom(symbols.length);
 		passwordOfSymbols += symbols[j];
 		symbols.splice(j, 1);
 	}
 	
-	console.log("%s %s %s %s", passwordOfUppercaseLetters, passwordOfLowercaseLetters, passwordOfNumbers, passwordOfSymbols);
+	seed += 1;
 	//#endregion
 
 	//#region Перемешивание символов для пароля и его создание
@@ -134,7 +130,8 @@ function generatePassword(serviceName, keyword, passwordLength) {
 			newSymbol += passwordOfLowercaseLetters[0];
 
 		//Вот этот символ
-		newSymbol = newSymbol[next(newSymbol.length)];
+		newSymbol = newSymbol[nextRandom(newSymbol.length)];
+		seed += 1;
 
 		//Удаляем символ из последовательности и запоминаем последовательность
 		if (!!~passwordOfNumbers.indexOf(newSymbol)) {
@@ -159,7 +156,6 @@ function generatePassword(serviceName, keyword, passwordLength) {
 	}
 	//#endregion
 
-	console.log(password);
 	return password;
 }
 
@@ -199,9 +195,10 @@ function getSumOfUTF8BytesFromString(str) {
     return sum;
 }
 
-function next(n) {
+function nextRandom(n) {
 	seed = (seed * seed) % _m;
 	var x = (n - 1) * seed / _m;
 	return Math.round(x);
 }
+
 
