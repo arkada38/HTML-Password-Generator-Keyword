@@ -32,14 +32,14 @@ var _lowercaseLetters = "abcdefghijklmnopqrstuvwxyz".split("");
 var _numbers = "1234567890".split("");
 var _symbols = "()`~!@#$%^&*-+=|{}[]:;'<>,.?/".split("");
 
-var seed;
+var _seed;
 var _m = (38 * 4 + 3) * (62 * 4 + 3);// p % 4 = 3 // q % 4 = 3 // m = p * q
 
 function generatePassword(serviceName, keyword, passwordLength, useSpecialSymbols) {
 	var serviceNameNumber = getSumOfUTF8BytesFromString(serviceName);
 	var keywordNumber = getSumOfUTF8BytesFromString(keyword);
 	
-	seed = (serviceNameNumber + keywordNumber) * passwordLength;
+	_seed = (serviceNameNumber + keywordNumber) * passwordLength;
 
 	//Password should be contain uppercase, lowercase, numbers and symbols
 	//without repeated characters
@@ -70,7 +70,7 @@ function generatePassword(serviceName, keyword, passwordLength, useSpecialSymbol
 		uppercaseLetters.splice(j, 1);
 	}
 	
-	seed += 1;
+	_seed += 1;
 
 	//lowercase
 	var lowercaseLetters = _lowercaseLetters.slice();
@@ -80,7 +80,7 @@ function generatePassword(serviceName, keyword, passwordLength, useSpecialSymbol
 		lowercaseLetters.splice(j, 1);
 	}
 	
-	seed += 1;
+	_seed += 1;
 
 	//numbers
 	var numbers = _numbers.slice();
@@ -90,7 +90,7 @@ function generatePassword(serviceName, keyword, passwordLength, useSpecialSymbol
 		numbers.splice(j, 1);
 	}
 	
-	seed += 1;
+	_seed += 1;
 
 	//symbols
 	var symbols = _symbols.slice();
@@ -100,7 +100,7 @@ function generatePassword(serviceName, keyword, passwordLength, useSpecialSymbol
 		symbols.splice(j, 1);
 	}
 	
-	seed += 1;
+	_seed += 1;
 	//#endregion
 
 	//#region Перемешивание символов для пароля и его создание
@@ -131,7 +131,7 @@ function generatePassword(serviceName, keyword, passwordLength, useSpecialSymbol
 
 		//Вот этот символ
 		newSymbol = newSymbol[nextRandom(newSymbol.length)];
-		seed += 1;
+		_seed += 1;
 
 		//Удаляем символ из последовательности и запоминаем последовательность
 		if (!!~passwordOfNumbers.indexOf(newSymbol)) {
@@ -196,8 +196,8 @@ function getSumOfUTF8BytesFromString(str) {
 }
 
 function nextRandom(n) {
-	seed = (seed * seed) % _m;
-	var x = (n - 1) * seed / _m;
+	_seed = (_seed * _seed) % _m;
+	var x = (n - 1) * _seed / _m;
 	return Math.round(x);
 }
 
